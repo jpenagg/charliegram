@@ -6,6 +6,7 @@ import cloudinary from "../utils/cloudinary"
 import type { ImageProps } from "../utils/types"
 import Header from "../components/Header"
 import Footer from "../components/Footer"
+import { getBase64ImageUrl } from "../utils/getBase64Url";
 
 export default function Home({ images }: { images: ImageProps[] }) {
   const router = useRouter()
@@ -18,18 +19,20 @@ export default function Home({ images }: { images: ImageProps[] }) {
         <Header />
         <main className="mx-auto max-w-[2000px]">
           <div className="columns-1 gap-4 text-xs:columns-2 sm:columns-3 xl:columns-3 2xl:columns-5 mx-4">
-              {images.map(({ id, height, width, image }) => (
+              {images.map(({ id, image, blurDataUrl }) => (
                 <Link
                   key={id}
                   href={`/?photoId=${id}`}
                   as={`/p/${id}`}
                 >
                   <Image 
-                    width={height}
-                    height={width}
+                    width="750"
+                    height="1000"
                     src={image}
                     alt=""
                     className="mb-4 rounded-lg"
+                    placeholder="blur"
+                    blurDataURL={blurDataUrl}
                   />
                 </Link>
               ))}
@@ -44,7 +47,6 @@ export async function getStaticProps() {
   const results = await cloudinary.v2.search
     .expression(`folder:${process.env.CLOUDINARY_FOLDER}/*`)
     .sort_by('public_id', 'desc')
-    .max_results(400)
     .execute()
 
   let reducedImages: ImageProps[] = []
@@ -56,8 +58,20 @@ export async function getStaticProps() {
       height: result.height,
       width: result.width,
       image: result.secure_url,
+      public_id: result.public_id,
+      format: result.format
     })
     i++
+  }
+
+  const blurImagePromises = results.resources.map((image: ImageProps) => {
+    return getBase64ImageUrl(image)
+  })
+  
+  const imagesWithBlurDataUrls = await Promise.all(blurImagePromises)
+
+  for (let i = 0; i < reducedImages.length; i++) {
+    reducedImages[i].blurDataUrl = imagesWithBlurDataUrls[i]
   }
 
   return {
