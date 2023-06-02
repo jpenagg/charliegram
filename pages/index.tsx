@@ -6,6 +6,7 @@ import cloudinary from "../utils/cloudinary"
 import type { ImageProps } from "../utils/types"
 import Header from "../components/Header"
 import Footer from "../components/Footer"
+import Modal from "../components/Modal"
 import { getBase64ImageUrl } from "../utils/getBase64Url";
 
 export default function Home({ images }: { images: ImageProps[] }) {
@@ -18,6 +19,11 @@ export default function Home({ images }: { images: ImageProps[] }) {
       </Head>
         <Header />
         <main className="mx-auto max-w-[2000px]">
+          {photoId && (
+            <Modal
+              images={images}
+            />
+          )}
           <div className="columns-1 gap-4 text-xs:columns-2 sm:columns-3 xl:columns-3 2xl:columns-5 mx-4">
               {images.map(({ id, image, blurDataUrl }) => (
                 <Link
