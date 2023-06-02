@@ -9,10 +9,14 @@ export default function Modal({
 }: {
   images: ImageProps[]
 }) {
-  let overlayRef = useRef()
+  let overlayRef = useRef(null)
   const router = useRouter()
 
-  let currentImage = images[0]
+  const { photoId } = router.query
+ 
+  let curIndex = Number(photoId)
+
+  let curImage = images[curIndex]
 
   return (
     <Dialog
@@ -21,21 +25,25 @@ export default function Modal({
       onClose={() => {
         router.push("/");
       }}
+      initialFocus={overlayRef}
       className="fixed inset-0 z-10 flex items-center justify-center"
     >
-      <Dialog.Overlay
-        ref={overlayRef}
-        className="fixed inset-0 z-30 bg-black/50 backdrop-blur-2xl"
-      />
-      <Image 
-        width="750"
-        height="1000"
-        src={currentImage.image}
-        alt=""
-        className="mb-4 rounded-lg"
-        placeholder="blur"
-        blurDataURL={currentImage.blurDataUrl}
-      />
+      <div className="fixed inset-0 bg-black/75"/>
+      <div className="fixed inset-0 flex items-center justify-center p-4">
+        <Dialog.Overlay
+          ref={overlayRef}
+          className="fixed inset-0"
+        />
+        <Image 
+          width="750"
+          height="1000"
+          src={curImage.image}
+          alt=""
+          className="mb-4 rounded-lg"
+          placeholder="blur"
+          blurDataURL={curImage.blurDataUrl}
+        />
+      </div>
     </Dialog>
   )
 }
