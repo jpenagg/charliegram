@@ -1,7 +1,7 @@
 export default function Header() {
   return (
     <>
-      <header className='text-white/80 text-center text-5xl p-6 m-6 font-mono'>
+      <header className='text-white/80 text-center text-5xl m-2 p-2 font-mono'>
         <a            
           target="_blank"
           className="font-semibold hover:text-white cursor-pointer"

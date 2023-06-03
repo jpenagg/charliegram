@@ -25,23 +25,23 @@ export default function Home({ images }: { images: ImageProps[] }) {
             />
           )}
           <div className="columns-1 gap-4 text-xs:columns-2 sm:columns-3 xl:columns-3 2xl:columns-6 mx-4">
-              {images.map(({ id, blurDataUrl, public_id, format }) => (
-                <Link
-                  key={id}
-                  href={`/?photoId=${id}`}
-                  as={`/p/${id}`}
-                >
-                  <Image 
-                    width="750"
-                    height="1000"
-                    src={`https://res.cloudinary.com/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload/f_jpg/${public_id}.${format}`}
-                    alt=""
-                    className="mb-4 rounded-lg"
-                    placeholder="blur"
-                    blurDataURL={blurDataUrl}
-                  />
-                </Link>
-              ))}
+            {images.map(({ id, blurDataUrl, public_id, format }) => (
+              <Link
+                key={id}
+                href={`/?photoId=${id}`}
+                as={`/p/${id}`}
+              >
+                <Image
+                  width="750"
+                  height="1000"
+                  src={`https://res.cloudinary.com/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload/f_jpg/${public_id}.${format}`}
+                  alt=""
+                  className="mb-4 rounded-lg"
+                  placeholder="blur"
+                  blurDataURL={blurDataUrl}
+                />
+              </Link>
+            ))}
           </div>
         </main>
         <Footer />

@@ -1,7 +1,7 @@
 export default function Footer() {
   return (
     <>
-      <footer className="p-6 text-center text-white/80 sm:p-12">
+      <footer className="p-2 m-2 text-center text-white/80 sm:p-12">
         <a
           href="https://jpena.dev"             
           target="_blank"
