@@ -15,7 +15,7 @@ export default function Home({ images }: { images: ImageProps[] }) {
   return (
     <>
       <Head>
-        <title>chxrliezxrd</title>
+        <title>chxrliegrxm</title>
       </Head>
         <Header />
         <main className="mx-auto max-w-[2000px]">
