@@ -37,7 +37,7 @@ export default function Modal({
         <Image 
           width="750"
           height="1000"
-          src={curImage.image}
+          src={`https://res.cloudinary.com/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload/f_jpg/${curImage.public_id}.${curImage.format}`}
           alt=""
           className="mb-4 rounded-lg"
           placeholder="blur"

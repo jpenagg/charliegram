@@ -9,6 +9,9 @@ export default function Header() {
         >
           CHXRLIEGRXM
         </a>
+        <div className="font-semibold text-sm">
+          Charlie & Friends
+        </div>
       </header>
     </>
   )
