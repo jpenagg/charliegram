@@ -4,9 +4,9 @@ import Head from "next/head";
 import { useRouter } from 'next/router'
 import cloudinary from "../utils/cloudinary"
 import type { ImageProps } from "../utils/types"
-import Header from "../components/Header"
-import Footer from "../components/Footer"
-import Modal from "../components/Modal"
+import Header from "../components/header"
+import Footer from "../components/footer"
+import Modal from "../components/modal"
 import { getBase64ImageUrl } from "../utils/getBase64Url";
 
 export default function Home({ images }: { images: ImageProps[] }) {
@@ -18,7 +18,10 @@ export default function Home({ images }: { images: ImageProps[] }) {
         <title>chxrliegrxm</title>
       </Head>
         <Header />
-        <main className="mx-auto max-w-[2000px]">
+        <Link className="text-white" href={`/milestone`}>
+          Milestone
+        </Link>
+        <main className="mx-auto max-w-[2000px]"> 
           {photoId && (
             <Modal
               images={images}
