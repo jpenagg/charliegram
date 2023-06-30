@@ -7,6 +7,7 @@ import type { ImageProps } from "../utils/types"
 import Header from "../components/Header"
 import Footer from "../components/Footer"
 import Modal from "../components/Modal"
+import Nav from "../components/Nav";
 import { getBase64ImageUrl } from "../utils/getBase64Url";
 
 export default function Home({ images }: { images: ImageProps[] }) {
@@ -17,7 +18,7 @@ export default function Home({ images }: { images: ImageProps[] }) {
       <Head>
         <title>chxrliegrxm</title>
       </Head>
-        <Header />
+        <Nav />
         <main className="mx-auto max-w-[2000px]">
           {photoId && (
             <Modal
