@@ -4,7 +4,6 @@ import Head from "next/head";
 import { useRouter } from 'next/router'
 import cloudinary from "../utils/cloudinary"
 import type { ImageProps } from "../utils/types"
-import Header from "../components/Header"
 import Footer from "../components/Footer"
 import Modal from "../components/Modal"
 import Nav from "../components/Nav";
