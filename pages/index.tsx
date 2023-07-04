@@ -17,7 +17,6 @@ export default function Home({ images }: { images: ImageProps[] }) {
       <Head>
         <title>charliegram</title>
       </Head>
-        <Nav />
         <main className="mx-auto max-w-[2000px]">
           {photoId && (
             <Modal
