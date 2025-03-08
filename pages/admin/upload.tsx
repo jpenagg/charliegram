@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/router'
 import Head from 'next/head'
@@ -6,13 +6,8 @@ import Image from 'next/image'
 import Navbar from '../../components/Navbar'
 
 export default function UploadPage() {
-  const { data: session, status } = useSession({
-    required: true,
-    onUnauthenticated() {
-      router.push('/auth/login?callbackUrl=/admin/upload')
-    },
-  })
   const router = useRouter()
+  const { data: session, status } = useSession()
   const [isDragging, setIsDragging] = useState(false)
   const [files, setFiles] = useState<File[]>([])
   const [uploading, setUploading] = useState(false)
@@ -38,6 +33,30 @@ export default function UploadPage() {
     const imageFiles = droppedFiles.filter(file => file.type.startsWith('image/'))
     setFiles(prev => [...prev, ...imageFiles])
   }, [])
+
+  useEffect(() => {
+    if (status === 'unauthenticated') {
+      router.replace('/auth/login?callbackUrl=/admin/upload')
+    }
+  }, [status, router])
+
+  // Show loading state while checking session
+  if (status === "loading") {
+    return (
+      <div className="min-h-screen bg-white dark:bg-gray-900 flex items-center justify-center">
+        <div className="animate-pulse flex space-x-2">
+          <div className="w-2 h-2 bg-gray-400 dark:bg-gray-600 rounded-full"></div>
+          <div className="w-2 h-2 bg-gray-400 dark:bg-gray-600 rounded-full"></div>
+          <div className="w-2 h-2 bg-gray-400 dark:bg-gray-600 rounded-full"></div>
+        </div>
+      </div>
+    )
+  }
+
+  // If not authenticated, don't render anything while redirecting
+  if (!session) {
+    return null
+  }
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -73,7 +92,6 @@ export default function UploadPage() {
         }))
       }
 
-      // Clear files after successful upload
       setFiles([])
       router.push('/')
     } catch (err) {
@@ -81,19 +99,6 @@ export default function UploadPage() {
     } finally {
       setUploading(false)
     }
-  }
-
-  // Show loading state while checking session
-  if (status === "loading") {
-    return (
-      <div className="min-h-screen bg-white dark:bg-gray-900 flex items-center justify-center">
-        <div className="animate-pulse flex space-x-2">
-          <div className="w-2 h-2 bg-gray-400 dark:bg-gray-600 rounded-full"></div>
-          <div className="w-2 h-2 bg-gray-400 dark:bg-gray-600 rounded-full"></div>
-          <div className="w-2 h-2 bg-gray-400 dark:bg-gray-600 rounded-full"></div>
-        </div>
-      </div>
-    )
   }
 
   return (
