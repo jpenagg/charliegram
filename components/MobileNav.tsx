@@ -30,14 +30,14 @@ export default function MobileNav() {
               className="block px-4 py-2 text-sm font-mono text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
               onClick={() => setIsOpen(false)}
             >
-              $ milestones
+              <span className="text-green-500">$</span> milestones
             </Link>
             <Link
               href="/about"
               className="block px-4 py-2 text-sm font-mono text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
               onClick={() => setIsOpen(false)}
             >
-              $ about
+              <span className="text-green-500">$</span> about
             </Link>
             {session && (
               <Link
@@ -45,7 +45,7 @@ export default function MobileNav() {
                 className="block px-4 py-2 text-sm font-mono text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                 onClick={() => setIsOpen(false)}
               >
-                $ upload
+                <span className="text-green-500">$</span> upload
               </Link>
             )}
             {session ? (
@@ -58,7 +58,7 @@ export default function MobileNav() {
                 }}
                 className="block w-full text-left px-4 py-2 text-sm font-mono text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
               >
-                $ logout
+                <span className="text-green-500">$</span> logout
               </button>
             ) : (
               <button
@@ -68,7 +68,7 @@ export default function MobileNav() {
                 }}
                 className="block w-full text-left px-4 py-2 text-sm font-mono text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
               >
-                $ login
+                <span className="text-green-500">$</span> login
               </button>
             )}
             <button
@@ -78,7 +78,7 @@ export default function MobileNav() {
               }}
               className="block w-full text-left px-4 py-2 text-sm font-mono text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
             >
-              $ toggle_theme
+              <span className="text-green-500">$</span> toggle_theme
             </button>
           </div>
         </div>

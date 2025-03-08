@@ -27,20 +27,20 @@ export default function Navbar() {
                 href="/milestones"
                 className="font-mono text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
               >
-                $ milestones
+                <span className="text-green-500">$</span> milestones
               </Link>
               <Link 
                 href="/about"
                 className="font-mono text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
               >
-                $ about
+                <span className="text-green-500">$</span> about
               </Link>
               {session && (
                 <Link 
                   href="/admin/upload"
                   className="font-mono text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
                 >
-                  $ upload
+                  <span className="text-green-500">$</span> upload
                 </Link>
               )}
               {session ? (
@@ -50,14 +50,14 @@ export default function Navbar() {
                   })}
                   className="font-mono text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
                 >
-                  $ logout
+                  <span className="text-green-500">$</span> logout
                 </button>
               ) : (
                 <button
                   onClick={() => signIn()}
                   className="font-mono text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
                 >
-                  $ login
+                  <span className="text-green-500">$</span> login
                 </button>
               )}
               <button
