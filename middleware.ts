@@ -1,21 +1,23 @@
-import { withAuth } from "next-auth/middleware"
-import { NextResponse } from "next/server"
+import { NextResponse } from 'next/server'
+import type { NextRequest } from 'next/server'
+import { withAuth } from 'next-auth/middleware'
 
-export default withAuth(
-  function middleware(req) {
-    // Redirect if they're not an admin
-    if (req.nextUrl.pathname.startsWith("/admin") && 
-        req.nextauth.token?.role !== "admin") {
-      return NextResponse.redirect(new URL("/auth/login", req.url))
-    }
-  },
-  {
-    callbacks: {
-      authorized: ({ token }) => !!token
-    },
+// This middleware does nothing except pass through all requests
+export function middleware(request: NextRequest) {
+  return NextResponse.next()
+}
+
+// Protect only the upload page and upload API
+export default withAuth({
+  callbacks: {
+    authorized: ({ token }) => !!token
   }
-)
+})
 
+// Empty matcher means it won't run on any routes
 export const config = {
-  matcher: ["/admin/:path*"]
+  matcher: [
+    '/admin/upload',
+    '/api/upload'
+  ]
 } 

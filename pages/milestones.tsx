@@ -1,8 +1,16 @@
 import Head from 'next/head'
 import Image from 'next/image'
 import Navbar from '../components/Navbar'
+import cloudinary from '../utils/cloudinary'
+import { getBase64ImageUrl } from '../utils/getBase64Url'
+import type { ImageProps } from '../utils/types'
 
-export default function Milestones() {
+interface MilestoneImage extends ImageProps {
+  monthNumber: number;
+  blurDataUrl: string;
+}
+
+export default function Milestones({ images }: { images: MilestoneImage[] }) {
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900">
       <Head>
@@ -25,26 +33,83 @@ export default function Milestones() {
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6">
-          {[...Array(12)].map((_, index) => (
-            <div 
-              key={index + 1}
-              className="group relative aspect-square rounded-lg sm:rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 animate-fade-up shadow-sm"
-              style={{ animationDelay: `${(index + 2) * 100}ms` }}
-            >
-              <div className="absolute inset-0 flex items-center justify-center text-gray-500 dark:text-gray-400">
-                <p className="text-base sm:text-lg font-mono">Month {index + 1}</p>
+          {[...Array(12)].map((_, index) => {
+            const monthNumber = index + 1;
+            const image = images.find(img => img.monthNumber === monthNumber);
+            
+            return (
+              <div 
+                key={monthNumber}
+                className="group relative aspect-square rounded-lg sm:rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 animate-fade-up shadow-sm"
+                style={{ animationDelay: `${(index + 2) * 100}ms` }}
+              >
+                {image ? (
+                  <Image
+                    src={`https://res.cloudinary.com/jpena/image/upload/v1/${image.public_id}.jpg`}
+                    alt={`Charlie - Month ${monthNumber}`}
+                    fill
+                    className="object-cover transition-transform duration-500 group-hover:scale-105"
+                    placeholder="blur"
+                    blurDataURL={image.blurDataUrl}
+                    priority={monthNumber <= 6}
+                  />
+                ) : (
+                  <div className="absolute inset-0 flex items-center justify-center text-gray-500 dark:text-gray-400">
+                    <p className="text-base sm:text-lg font-mono">Month {monthNumber}</p>
+                  </div>
+                )}
+                <div className="absolute bottom-0 left-0 right-0 p-3 sm:p-4 bg-gradient-to-t from-black/70 to-transparent">
+                  <p className="text-white font-mono text-sm sm:text-base">
+                    <span className="text-green-400">$</span> month_{monthNumber}
+                    <span className="opacity-50 ml-2 hidden sm:inline">{/* Date can be added here */}</span>
+                  </p>
+                </div>
               </div>
-              {/* Image component will be added once we have the actual photos */}
-              <div className="absolute bottom-0 left-0 right-0 p-3 sm:p-4 bg-gradient-to-t from-black/70 to-transparent">
-                <p className="text-white font-mono text-sm sm:text-base">
-                  <span className="text-green-400">$</span> month_{index + 1} 
-                  <span className="opacity-50 ml-2 hidden sm:inline">{/* Date can be added here */}</span>
-                </p>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </main>
     </div>
   )
+}
+
+export async function getStaticProps() {
+  try {
+    const results = await cloudinary.api.resources({
+      type: 'upload',
+      prefix: 'milestones/',
+      max_results: 12,
+    });
+
+    const blurImagePromises = results.resources.map((image: ImageProps) => 
+      getBase64ImageUrl(image)
+    );
+    const blurDataUrls = await Promise.all(blurImagePromises);
+
+    const processedImages = results.resources.map((image: ImageProps, i: number) => {
+      // Extract month number from filename (assuming format: "month_1", "month_2", etc.)
+      const monthMatch = image.public_id.match(/month_(\d+)/);
+      const monthNumber = monthMatch ? parseInt(monthMatch[1]) : 0;
+      
+      return {
+        ...image,
+        monthNumber,
+        blurDataUrl: blurDataUrls[i]
+      };
+    });
+
+    return {
+      props: {
+        images: processedImages
+      },
+      revalidate: 60
+    }
+  } catch (error) {
+    console.error('Error:', error);
+    return {
+      props: {
+        images: []
+      }
+    }
+  }
 }

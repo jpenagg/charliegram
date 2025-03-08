@@ -24,18 +24,20 @@ export default function Login() {
       const result = await signIn('credentials', {
         username,
         password,
-        redirect: false,
+        redirect: false
       })
-
+      
       if (result?.error) {
+        console.error('Login error:', result.error)
         setError('Invalid credentials')
-        setLoading(false)
-        return
+      } else {
+        // Redirect to home page instead of upload
+        await router.push('/')
       }
-
-      router.push('/admin/upload')
     } catch (error) {
+      console.error('Login error:', error)
       setError('An error occurred')
+    } finally {
       setLoading(false)
     }
   }

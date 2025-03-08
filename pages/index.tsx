@@ -1,7 +1,7 @@
 import Head from "next/head";
 import Image from "next/image";
 import { useRouter } from "next/router";
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { useSession } from 'next-auth/react';
 import cloudinary from "../utils/cloudinary";
 import Modal from "../components/Modal";
@@ -18,6 +18,18 @@ export default function Home({ initialImages = [] }: { initialImages: ImageProps
   const [cursor, setCursor] = useState("");
   const { data: session } = useSession();
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [message, setMessage] = useState('');
+
+  useEffect(() => {
+    if (router.query.message === 'logged_out') {
+      setMessage('Successfully logged out');
+      // Clear the message from the URL
+      router.replace('/', undefined, { shallow: true });
+      // Clear the message after 3 seconds
+      const timer = setTimeout(() => setMessage(''), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [router.query.message, router]);
 
   const loadMore = useCallback(async () => {
     if (loading || !hasMore) return;
@@ -81,12 +93,27 @@ export default function Home({ initialImages = [] }: { initialImages: ImageProps
   };
 
   return (
-    <>
+    <div className="min-h-screen bg-white dark:bg-gray-900">
       <Head>
         <title>charliegram</title>
       </Head>
 
       <Navbar />
+
+      {message && (
+        <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 bg-gray-900 dark:bg-gray-800 text-white px-6 py-3 rounded-lg font-mono z-50 shadow-lg flex items-center gap-3">
+          <span className="text-green-500">$</span> {message}
+          <button 
+            onClick={() => setMessage('')}
+            className="ml-2 text-gray-400 hover:text-white transition-colors"
+            aria-label="Close message"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      )}
 
       <main className="mx-auto max-w-7xl px-4 pt-24 pb-8">
         <div className="grid grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4">
@@ -144,7 +171,7 @@ export default function Home({ initialImages = [] }: { initialImages: ImageProps
 
         {photoId && <Modal images={images} />}
       </main>
-    </>
+    </div>
   );
 }
 

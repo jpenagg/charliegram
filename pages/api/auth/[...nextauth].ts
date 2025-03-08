@@ -1,20 +1,6 @@
-import NextAuth, { NextAuthOptions, User, DefaultSession } from 'next-auth'
+import NextAuth, { NextAuthOptions } from 'next-auth'
 import CredentialsProvider from 'next-auth/providers/credentials'
 import { validateEnvVars } from '../../../utils/env'
-
-// Extend the session user type
-declare module "next-auth" {
-  interface Session {
-    user: {
-      id: string
-    } & DefaultSession["user"]
-  }
-}
-
-// Extend the User type to include role
-interface CustomUser extends User {
-  role?: string
-}
 
 // Validate environment variables
 try {
@@ -43,12 +29,9 @@ export const authOptions: NextAuthOptions = {
         password: { label: "Password", type: "password" }
       },
       async authorize(credentials) {
-        if (!credentials?.username || !credentials?.password) return null
-        
-        // Your existing auth logic here
         if (
-          credentials.username === process.env.ADMIN_USERNAME &&
-          credentials.password === process.env.ADMIN_PASSWORD
+          credentials?.username === process.env.ADMIN_USERNAME &&
+          credentials?.password === process.env.ADMIN_PASSWORD
         ) {
           return { id: '1', name: 'Admin' }
         }
@@ -56,12 +39,12 @@ export const authOptions: NextAuthOptions = {
       }
     })
   ],
-  session: {
-    strategy: "jwt" as const,
-    maxAge: 30 * 24 * 60 * 60, // 30 days
-  },
   pages: {
-    signIn: '/auth/login',
+    signIn: '/auth/login'
+  },
+  session: {
+    strategy: 'jwt',
+    maxAge: 30 * 24 * 60 * 60 // 30 days
   },
   cookies: {
     sessionToken: {
@@ -73,25 +56,7 @@ export const authOptions: NextAuthOptions = {
         secure: process.env.NODE_ENV === 'production'
       }
     }
-  },
-  callbacks: {
-    async jwt({ token, user }) {
-      if (user) {
-        token.id = user.id
-      }
-      return token
-    },
-    async session({ session, token }) {
-      if (token && session.user) {
-        session.user.id = token.id as string
-      }
-      return session
-    },
-    async redirect({ url, baseUrl }) {
-      // Always redirect to upload page after login
-      return `${baseUrl}/admin/upload`
-    }
-  },
+  }
 }
 
 export default NextAuth(authOptions) 

@@ -45,7 +45,9 @@ export default function Navbar() {
               )}
               {session ? (
                 <button
-                  onClick={() => signOut()}
+                  onClick={() => signOut({ 
+                    callbackUrl: '/?message=logged_out'
+                  })}
                   className="font-mono text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
                 >
                   $ logout
