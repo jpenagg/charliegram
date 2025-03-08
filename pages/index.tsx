@@ -68,7 +68,7 @@ export default function Home({ initialImages = [] }: { initialImages: ImageProps
       <Navbar />
 
       <main className="mx-auto max-w-7xl px-4 pt-24 pb-8">
-        <div className="grid grid-cols-3 gap-2 sm:gap-4">
+        <div className="grid grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4">
           {images.map((image, index) => (
             <div
               key={image.public_id}
