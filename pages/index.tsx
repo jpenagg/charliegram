@@ -94,7 +94,7 @@ export default function Home({ initialImages = [] }: { initialImages: ImageProps
             <div
               key={image.public_id}
               ref={index === images.length - 1 ? lastImageRef : null}
-              className="relative aspect-square overflow-hidden rounded-xl bg-gray-100 dark:bg-gray-800 cursor-pointer group shadow-sm hover:shadow-xl transition-shadow duration-500"
+              className="relative aspect-[4/5] overflow-hidden rounded-xl bg-gray-100 dark:bg-gray-800 cursor-pointer group shadow-sm hover:shadow-xl transition-shadow duration-500"
             >
               <Image
                 src={`https://res.cloudinary.com/jpena/image/upload/v1/${image.public_id}.jpg`}
