@@ -6,7 +6,12 @@ import Image from 'next/image'
 import Navbar from '../../components/Navbar'
 
 export default function UploadPage() {
-  const { data: session, status } = useSession()
+  const { data: session, status } = useSession({
+    required: true,
+    onUnauthenticated() {
+      router.push('/auth/login?callbackUrl=/admin/upload')
+    },
+  })
   const router = useRouter()
   const [isDragging, setIsDragging] = useState(false)
   const [files, setFiles] = useState<File[]>([])
@@ -78,10 +83,17 @@ export default function UploadPage() {
     }
   }
 
-  // Redirect if not authenticated
-  if (status === 'unauthenticated') {
-    router.push('/auth/login')
-    return null
+  // Show loading state while checking session
+  if (status === "loading") {
+    return (
+      <div className="min-h-screen bg-white dark:bg-gray-900 flex items-center justify-center">
+        <div className="animate-pulse flex space-x-2">
+          <div className="w-2 h-2 bg-gray-400 dark:bg-gray-600 rounded-full"></div>
+          <div className="w-2 h-2 bg-gray-400 dark:bg-gray-600 rounded-full"></div>
+          <div className="w-2 h-2 bg-gray-400 dark:bg-gray-600 rounded-full"></div>
+        </div>
+      </div>
+    )
   }
 
   return (
