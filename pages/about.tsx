@@ -1,5 +1,6 @@
 import Head from 'next/head'
 import Image from 'next/image'
+import Navbar from '../components/Navbar'
 
 export default function About() {
   return (
@@ -13,6 +14,9 @@ export default function About() {
         <meta property="og:type" content="website" />
         <meta name="twitter:card" content="summary_large_image" />
       </Head>
+
+      <Navbar />
+      
       <main className="pt-24 pb-8 px-4 sm:px-6 lg:px-8 max-w-3xl mx-auto font-mono">
         <div className="prose dark:prose-invert mx-auto">
           <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-8 animate-fade-up">

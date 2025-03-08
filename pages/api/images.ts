@@ -1,45 +1,37 @@
 import { NextApiRequest, NextApiResponse } from 'next'
 import cloudinary from '../../utils/cloudinary'
 import { getBase64ImageUrl } from '../../utils/getBase64Url'
-import type { ImageProps } from '../../utils/types'
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const { cursor = '' } = req.query
-  const limit = 12
+  const { cursor } = req.query
 
   try {
-    const query = cloudinary.v2.search
-      .expression('folder:charliezard/*')
-      .sort_by('public_id', 'desc')
-      .max_results(limit)
+    const results = await cloudinary.api.resources({
+      type: 'upload',
+      prefix: 'charliezard/',
+      max_results: 12,
+      next_cursor: cursor,
+      sort_by: 'created_at',
+      direction: 'desc'
+    })
 
-    if (cursor) {
-      query.next_cursor(cursor as string)
-    }
-
-    const results = await query.execute()
-
-    const processedImages = await Promise.all(
-      results.resources.map(async (result, index) => {
-        const image: ImageProps = {
-          id: result.asset_id, // Using Cloudinary's asset_id as a unique identifier
-          height: result.height,
-          width: result.width,
-          public_id: result.public_id,
-          format: result.format,
-          image: result.secure_url
-        }
-        const blurDataUrl = await getBase64ImageUrl(image)
-        return { ...image, blurDataUrl }
-      })
+    // Generate blur placeholders
+    const blurImagePromises = results.resources.map(image => 
+      getBase64ImageUrl(image)
     )
+    const blurDataUrls = await Promise.all(blurImagePromises)
+
+    const imagesWithBlur = results.resources.map((image, i) => ({
+      ...image,
+      blurDataUrl: blurDataUrls[i]
+    }))
 
     res.status(200).json({
-      images: processedImages,
+      images: imagesWithBlur,
       next_cursor: results.next_cursor
     })
   } catch (error) {
-    console.error('Error loading images:', error)
+    console.error('API Error:', error)
     res.status(500).json({ error: 'Error loading images' })
   }
 } 
