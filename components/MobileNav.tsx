@@ -77,8 +77,21 @@ export default function MobileNav() {
                 setIsOpen(false);
               }}
               className="block w-full text-left px-4 py-2 text-sm font-mono text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+              aria-label="Toggle dark mode"
             >
-              <span className="text-green-500">$</span> toggle_theme
+              <div className="flex items-center">
+                {theme === 'dark' ? (
+                  <>
+                    light_mode
+                    <SunIcon className="h-5 w-5 ml-2" />
+                  </>
+                ) : (
+                  <>
+                    dark_mode
+                    <MoonIcon className="h-5 w-5 ml-2" />
+                  </>
+                )}
+              </div>
             </button>
           </div>
         </div>
