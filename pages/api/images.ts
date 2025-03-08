@@ -6,16 +6,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const { cursor } = req.query
 
   try {
-    const results = await cloudinary.api.resources({
-      type: 'upload',
-      prefix: 'charliezard/',
-      max_results: 12,
-      next_cursor: cursor,
-      sort_by: 'created_at',
-      direction: 'desc'
-    })
+    const results = await cloudinary.search
+      .expression('folder:charliezard/*')
+      .sort_by('created_at', 'desc')
+      .max_results(12)
+      .next_cursor(cursor as string)
+      .execute()
 
-    // Generate blur placeholders
     const blurImagePromises = results.resources.map(image => 
       getBase64ImageUrl(image)
     )

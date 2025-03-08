@@ -1,9 +1,8 @@
 import { NextApiRequest, NextApiResponse } from 'next'
-import { getServerSession } from 'next-auth/next'
+import { getServerSession } from 'next-auth'
 import { authOptions } from './auth/[...nextauth]'
 import formidable from 'formidable'
-import cloudinary from '../../utils/cloudinary'
-import { createReadStream } from 'fs'
+import { v2 as cloudinary } from 'cloudinary'
 
 export const config = {
   api: {
@@ -12,43 +11,29 @@ export const config = {
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  // Check if user is authenticated
-  const session = await getServerSession(req, res, authOptions)
-  if (!session) {
-    return res.status(401).json({ error: 'Unauthorized' })
-  }
-
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' })
-  }
-
   try {
+    const session = await getServerSession(req, res, authOptions)
+    if (!session) {
+      return res.status(401).json({ error: 'Unauthorized' })
+    }
+
     const form = formidable({})
     const [fields, files] = await form.parse(req)
-    const file = Array.isArray(files.file) ? files.file[0] : files.file
+    const file = files.file?.[0]
+    const tags = fields.tags?.[0]?.split(',') || []
 
     if (!file) {
       return res.status(400).json({ error: 'No file uploaded' })
     }
 
-    // Upload to Cloudinary
-    const result = await new Promise((resolve, reject) => {
-      const upload = cloudinary.uploader.upload_stream(
-        {
-          folder: process.env.CLOUDINARY_FOLDER,
-        },
-        (error, result) => {
-          if (error) reject(error)
-          else resolve(result)
-        }
-      )
-
-      createReadStream(file.filepath).pipe(upload)
+    const result = await cloudinary.uploader.upload(file.filepath, {
+      folder: 'charliezard',
+      tags: tags,
     })
 
     res.status(200).json(result)
   } catch (error) {
     console.error('Upload error:', error)
-    res.status(500).json({ error: 'Failed to upload file' })
+    res.status(500).json({ error: 'Error uploading file' })
   }
 } 

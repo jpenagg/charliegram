@@ -2,9 +2,9 @@
 module.exports = {
     darkMode: 'class',
     content: [
-        "./pages/**/*.{js,ts,jsx,tsx,mdx}",
-        "./components/**/*.{js,ts,jsx,tsx,mdx}",
-        "./app/**/*.{js,ts,jsx,tsx,mdx}",
+        "./pages/**/*.{js,ts,jsx,tsx}",
+        "./components/**/*.{js,ts,jsx,tsx}",
+        "./app/**/*.{js,ts,jsx,tsx}",
     ],
     theme: {
         extend: {
@@ -31,6 +31,13 @@ module.exports = {
             },
             animation: {
                 'fade-up': 'fade-up 0.5s ease-out forwards'
+            },
+            colors: {
+                gray: {
+                    900: '#15202B', // Twitter dark mode background
+                    800: '#1E2732', // Slightly lighter for contrasting elements
+                    700: '#2C3640', // Input backgrounds and hover states
+                }
             }
         },
     },

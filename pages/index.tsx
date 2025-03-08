@@ -1,16 +1,13 @@
-import Image from "next/image";
 import Head from "next/head";
-import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/router";
 import { useState, useRef, useCallback } from "react";
+import { useSession } from 'next-auth/react';
 import cloudinary from "../utils/cloudinary";
 import Modal from "../components/Modal";
 import Navbar from "../components/Navbar";
 import type { ImageProps } from "../utils/types";
 import { getBase64ImageUrl } from "../utils/getBase64Url";
-import { useTheme } from 'next-themes';
-import { SunIcon, MoonIcon } from '@heroicons/react/24/outline';
-import { useSession, signIn, signOut } from 'next-auth/react';
 
 export default function Home({ initialImages = [] }: { initialImages: ImageProps[] }) {
   const router = useRouter();
@@ -19,8 +16,8 @@ export default function Home({ initialImages = [] }: { initialImages: ImageProps
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [cursor, setCursor] = useState("");
-  const { theme, setTheme } = useTheme();
   const { data: session } = useSession();
+  const [deleting, setDeleting] = useState<string | null>(null);
 
   const loadMore = useCallback(async () => {
     if (loading || !hasMore) return;
@@ -31,10 +28,15 @@ export default function Home({ initialImages = [] }: { initialImages: ImageProps
       const data = await res.json();
       
       if (data.images?.length) {
-        setImages(prev => [...prev, ...data.images]);
-        if (data.next_cursor) {
-          setCursor(data.next_cursor);
-        } else {
+        const existingIds = new Set(images.map(img => img.public_id));
+        const newImages = data.images.filter(img => !existingIds.has(img.public_id));
+        
+        if (newImages.length > 0) {
+          setImages(prev => [...prev, ...newImages]);
+          setCursor(data.next_cursor || "");
+        }
+        
+        if (newImages.length === 0 || !data.next_cursor) {
           setHasMore(false);
         }
       } else {
@@ -44,9 +46,8 @@ export default function Home({ initialImages = [] }: { initialImages: ImageProps
       console.error('Error loading more images:', error);
     }
     setLoading(false);
-  }, [cursor, loading, hasMore]);
+  }, [cursor, loading, hasMore, images]);
 
-  // Intersection Observer for infinite scroll
   const observerRef = useRef<IntersectionObserver>();
   const lastImageRef = useCallback((node: Element | null) => {
     if (loading) return;
@@ -58,6 +59,26 @@ export default function Home({ initialImages = [] }: { initialImages: ImageProps
     });
     if (node) observerRef.current.observe(node);
   }, [loading, hasMore, loadMore]);
+
+  const handleDelete = async (public_id: string) => {
+    if (!confirm('Are you sure you want to delete this image?')) return;
+    
+    setDeleting(public_id);
+    try {
+      const response = await fetch(`/api/delete-image?public_id=${encodeURIComponent(public_id)}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) throw new Error('Failed to delete image');
+
+      setImages(prev => prev.filter(img => img.public_id !== public_id));
+    } catch (error) {
+      console.error('Error deleting image:', error);
+      alert('Failed to delete image');
+    } finally {
+      setDeleting(null);
+    }
+  };
 
   return (
     <>
@@ -73,7 +94,6 @@ export default function Home({ initialImages = [] }: { initialImages: ImageProps
             <div
               key={image.public_id}
               ref={index === images.length - 1 ? lastImageRef : null}
-              onClick={() => router.push(`/?photoId=${image.public_id}`, undefined, { shallow: true })}
               className="relative aspect-square overflow-hidden rounded-xl bg-gray-100 dark:bg-gray-800 cursor-pointer group shadow-sm hover:shadow-xl transition-shadow duration-500"
             >
               <Image
@@ -85,7 +105,29 @@ export default function Home({ initialImages = [] }: { initialImages: ImageProps
                 placeholder="blur"
                 blurDataURL={image.blurDataUrl}
                 loading={index < 8 ? "eager" : "lazy"}
+                onClick={() => router.push(`/?photoId=${image.public_id}`, undefined, { shallow: true })}
               />
+              {session && (
+                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDelete(image.public_id);
+                    }}
+                    disabled={deleting === image.public_id}
+                    className="bg-red-500 hover:bg-red-600 text-white rounded-full p-2 shadow-lg"
+                    aria-label="Delete image"
+                  >
+                    {deleting === image.public_id ? (
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    )}
+                  </button>
+                </div>
+              )}
             </div>
           ))}
         </div>
@@ -116,7 +158,6 @@ export async function getStaticProps() {
       direction: 'desc'
     });
 
-    // Generate blur placeholder for each image
     const blurImagePromises = results.resources.map((image: ImageProps) => 
       getBase64ImageUrl(image)
     );
