@@ -33,7 +33,7 @@ export default function Login() {
         return
       }
 
-      router.push('/')
+      router.push('/admin/upload')
     } catch (error) {
       setError('An error occurred')
       setLoading(false)
