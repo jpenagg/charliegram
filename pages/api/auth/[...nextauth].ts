@@ -1,7 +1,15 @@
-import NextAuth from 'next-auth'
+import NextAuth, { NextAuthOptions, User, DefaultSession } from 'next-auth'
 import CredentialsProvider from 'next-auth/providers/credentials'
 import { validateEnvVars } from '../../../utils/env'
-import rateLimit from '../../../utils/rateLimit'
+
+// Extend the session user type
+declare module "next-auth" {
+  interface Session {
+    user: {
+      id: string
+    } & DefaultSession["user"]
+  }
+}
 
 // Extend the User type to include role
 interface CustomUser extends User {
@@ -26,7 +34,7 @@ const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'admin'
 // This should be a hashed password in production
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'your-secure-password'
 
-export const authOptions = {
+export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
       name: 'Credentials',
@@ -49,7 +57,7 @@ export const authOptions = {
     })
   ],
   session: {
-    strategy: "jwt",
+    strategy: "jwt" as const,
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
   pages: {
@@ -63,11 +71,8 @@ export const authOptions = {
       return token
     },
     async session({ session, token }) {
-      if (token) {
-        session.user = {
-          ...session.user,
-          id: token.id as string,
-        }
+      if (token && session.user) {
+        session.user.id = token.id as string
       }
       return session
     }
