@@ -1,84 +1,77 @@
-import Image from "next/image";
-import type { GetStaticPaths, GetStaticProps, NextPage } from 'next'
-import type { ImageProps } from "../../utils/types"
-import cloudinary from "../../utils/cloudinary"
-import { getBase64ImageUrl } from "../../utils/getBase64Url";
+import type { GetStaticProps, GetStaticPaths } from 'next'
+import Head from 'next/head'
+import Image from 'next/image'
+import Link from 'next/link'
+import { useRouter } from 'next/router'
+import type { ImageProps } from '../../utils/types'
+import cloudinary from '../../utils/cloudinary'
+import { getBase64ImageUrl } from '../../utils/getBase64Url'
 
-const Home: NextPage = ({
-  currentPhoto,
-}: {
-  currentPhoto: ImageProps
-}) => {
+export default function PhotoPage({ photo }: { photo: ImageProps }) {
+  const router = useRouter()
 
-  return (  
-    <div className="flex items-center justify-center h-screen px-2 mx-2">
-      <Image
-          src={currentPhoto.image}
-          width="750"
-          height="1000"
-          alt=""
-          className="mb-4 rounded-lg"
+  return (
+    <>
+      <Head>
+        <title>Photo</title>
+      </Head>
+      <div className="flex items-center justify-center h-screen px-2 mx-2">
+        <Image
+          src={`https://res.cloudinary.com/jpena/image/upload/v1/${photo.public_id}.jpg`}
+          width={750}
+          height={1000}
+          alt="Photo of Charlie"
+          className="rounded-lg shadow-lg"
           placeholder="blur"
-          blurDataURL={currentPhoto.blurDataUrl}
+          blurDataURL={photo.blurDataUrl}
+          priority
         />
-    </div>
+      </div>
+    </>
   )
 }
 
-export default Home
+export const getStaticProps: GetStaticProps = async ({ params }) => {
+  const results = await cloudinary.api.resources({
+    type: 'upload',
+    prefix: 'charliezard/',
+    max_results: 100
+  })
 
-export const getStaticProps: GetStaticProps = async (context) => {
-
-  let results
-
-  const fetchedResults = await cloudinary.v2.search
-    .expression(`folder:${process.env.CLOUDINARY_FOLDER}/*`)
-    .sort_by('public_id', 'desc')
-    .max_results(400)
-    .execute()
-
-  results = fetchedResults
-  
-  let reducedImages: ImageProps[] = []
-  let i = 0
-  for (let result of results.resources) {
-    reducedImages.push({
-      id: i,
-      height: result.height,
-      width: result.width,
-      image: result.secure_url,
-      public_id: result.public_id,
-      format: result.format
-    })
-    i++
+  const photo = results.resources.find(r => r.public_id === params?.photoId)
+  if (!photo) {
+    return {
+      notFound: true
+    }
   }
 
-  const currentPhoto = reducedImages.find(
-    (img) => img.id === Number(context.params.photoId)
-  )
-  currentPhoto.blurDataUrl = await getBase64ImageUrl(currentPhoto)
+  const blurDataUrl = await getBase64ImageUrl(photo)
 
   return {
     props: {
-      currentPhoto: currentPhoto,
-    },
+      photo: {
+        ...photo,
+        blurDataUrl
+      }
+    }
   }
 }
 
 export const getStaticPaths: GetStaticPaths = async () => {
-  const results = await cloudinary.v2.search
-    .expression(`folder:${process.env.CLOUDINARY_FOLDER}/*`)
-    .sort_by('public_id', 'desc')
-    .max_results(400)
-    .execute()
+  const results = await cloudinary.api.resources({
+    type: 'upload',
+    prefix: 'charliezard/',
+    max_results: 100
+  })
 
-  let fullPaths = []
-  for (let i = 0; i < results.resources.length; i++) {
-    fullPaths.push({ params: { photoId: i.toString() } })
-  }
+  const paths = results.resources.map(photo => ({
+    params: {
+      photoId: photo.public_id
+    }
+  }))
 
   return {
-    paths: fullPaths,
-    fallback: false,
+    paths,
+    fallback: 'blocking'
   }
 }
