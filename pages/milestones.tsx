@@ -94,11 +94,15 @@ export async function getStaticProps() {
       type: 'upload',
       prefix: 'milestones/month_',
       max_results: 12,
-      resource_type: 'image'
+      resource_type: 'image',
+      transformation: [
+        { width: 800, crop: 'scale' },
+        { quality: 'auto', fetch_format: 'auto' }
+      ]
     });
 
     const blurImagePromises = results.resources.map((image: ImageProps) => 
-      getBase64ImageUrl(image)
+      getBase64ImageUrl(image, true)
     );
     const blurDataUrls = await Promise.all(blurImagePromises);
 
@@ -109,7 +113,9 @@ export async function getStaticProps() {
       return {
         public_id: image.public_id,
         monthNumber,
-        blurDataUrl: blurDataUrls[i]
+        blurDataUrl: blurDataUrls[i],
+        width: image.width,
+        height: image.height
       };
     });
 
