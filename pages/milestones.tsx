@@ -77,8 +77,9 @@ export async function getStaticProps() {
   try {
     const results = await cloudinary.api.resources({
       type: 'upload',
-      prefix: 'milestones/',
+      prefix: 'milestones/month_',
       max_results: 12,
+      resource_type: 'image'
     });
 
     const blurImagePromises = results.resources.map((image: ImageProps) => 
@@ -87,12 +88,11 @@ export async function getStaticProps() {
     const blurDataUrls = await Promise.all(blurImagePromises);
 
     const processedImages = results.resources.map((image: ImageProps, i: number) => {
-      // Extract month number from filename (assuming format: "month_1", "month_2", etc.)
       const monthMatch = image.public_id.match(/month_(\d+)/);
       const monthNumber = monthMatch ? parseInt(monthMatch[1]) : 0;
       
       return {
-        ...image,
+        public_id: image.public_id,
         monthNumber,
         blurDataUrl: blurDataUrls[i]
       };
