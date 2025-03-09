@@ -1,6 +1,8 @@
 import Head from 'next/head'
 import Image from 'next/image'
+import { useRouter } from 'next/router'
 import Navbar from '../components/Navbar'
+import Modal from '../components/Modal'
 import cloudinary from '../utils/cloudinary'
 import { getBase64ImageUrl } from '../utils/getBase64Url'
 import type { ImageProps } from '../utils/types'
@@ -11,6 +13,9 @@ interface MilestoneImage extends ImageProps {
 }
 
 export default function Milestones({ images }: { images: MilestoneImage[] }) {
+  const router = useRouter();
+  const { photoId } = router.query;
+
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900">
       <Head>
@@ -40,12 +45,13 @@ export default function Milestones({ images }: { images: MilestoneImage[] }) {
             return (
               <div 
                 key={monthNumber}
-                className="group relative aspect-square rounded-lg sm:rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 animate-fade-up shadow-sm"
+                className="group relative aspect-square rounded-lg sm:rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 animate-fade-up shadow-sm cursor-pointer"
                 style={{ animationDelay: `${(index + 2) * 100}ms` }}
+                onClick={() => image && router.push(`/milestones?photoId=${image.public_id}`, undefined, { shallow: true })}
               >
                 {image ? (
                   <Image
-                    src={`https://res.cloudinary.com/jpena/image/upload/v1/${image.public_id}.jpg`}
+                    src={`https://res.cloudinary.com/jpena/image/upload/q_auto,f_auto,q_40,w_800/v1/${image.public_id}.jpg`}
                     alt={`Charlie - Month ${monthNumber}`}
                     fill
                     className="object-cover transition-transform duration-500 group-hover:scale-105"
@@ -68,6 +74,15 @@ export default function Milestones({ images }: { images: MilestoneImage[] }) {
             );
           })}
         </div>
+
+        {photoId && (
+          <Modal 
+            images={[...Array(12)].map((_, index) => {
+              const monthNumber = index + 1;
+              return images.find(img => img.monthNumber === monthNumber);
+            }).filter((img): img is ImageProps => !!img)} 
+          />
+        )}
       </main>
     </div>
   )
