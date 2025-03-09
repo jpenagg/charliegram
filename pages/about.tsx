@@ -31,7 +31,7 @@ export default function About() {
             </p>
 
             <p className="text-lg leading-relaxed animate-fade-up [animation-delay:400ms] before:content-['$'] before:mr-2 before:text-green-500">
-              This website is my gift to Charlie, built with love and code during my paternity leave, 
+              This website is my gift to Charlie, built with love during my paternity leave, 
               in the quiet moments while she slept. It&apos;s a digital time capsule where I can share 
               her journey, her smiles, and all the little moments that make life magical.
             </p>

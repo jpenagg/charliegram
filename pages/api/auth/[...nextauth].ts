@@ -16,9 +16,9 @@ try {
 }
 
 // This would typically come from an environment variable
-const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'admin'
+const ADMIN_USERNAME = process.env.ADMIN_USERNAME
 // This should be a hashed password in production
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'your-secure-password'
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD
 
 export const authOptions: NextAuthOptions = {
   providers: [
