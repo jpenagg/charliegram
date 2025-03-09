@@ -24,7 +24,7 @@ export default function Milestones({ images }: { images: MilestoneImage[] }) {
 
       <main className="pt-20 pb-8 px-3 sm:px-6 lg:px-8 max-w-7xl mx-auto">
         <div className="text-center mb-8 sm:mb-12">
-          <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white mb-3 sm:mb-4 font-mono animate-fade-up">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-3 sm:mb-4 font-mono animate-fade-up">
             {'>'} charlie&apos;s_first_year
           </h1>
           <p className="text-base sm:text-lg text-gray-600 dark:text-gray-300 animate-fade-up [animation-delay:200ms] before:content-['$'] before:mr-2 before:text-green-500">

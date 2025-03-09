@@ -26,6 +26,13 @@ export default function MobileNav() {
         <div className="absolute right-0 mt-2 w-48 rounded-lg shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5">
           <div className="py-1">
             <Link
+              href="/"
+              className="block px-4 py-2 text-sm font-mono text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+              onClick={() => setIsOpen(false)}
+            >
+              <span className="text-green-500">$</span> home
+            </Link>
+            <Link
               href="/milestones"
               className="block px-4 py-2 text-sm font-mono text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
               onClick={() => setIsOpen(false)}

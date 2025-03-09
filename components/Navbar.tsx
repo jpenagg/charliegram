@@ -24,6 +24,12 @@ export default function Navbar() {
             </Link>
             <div className="hidden sm:flex items-center space-x-4">
               <Link 
+                href="/"
+                className="font-mono text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
+              >
+                <span className="text-green-500">$</span> home
+              </Link>
+              <Link 
                 href="/milestones"
                 className="font-mono text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
               >
