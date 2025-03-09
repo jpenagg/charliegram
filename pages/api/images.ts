@@ -35,13 +35,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           prefix: 'charliezard/',
           max_results: 500,
           resource_type: 'image',
-          tags: tag ? true : false
+          tags: true  // Explicitly request tags
         });
 
         // Filter by tag if specified
         let resources = allResults.resources;
         if (tag) {
-          resources = resources.filter(img => img.tags?.includes(tag));
+          resources = resources.filter(img => Array.isArray(img.tags) && img.tags.includes(tag));
         }
 
         const timestamp = Date.now();
@@ -74,7 +74,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           width: image.width,
           height: image.height,
           format: image.format || 'jpg',
-          tags: image.tags || []
+          tags: Array.isArray(image.tags) ? image.tags : []
         }));
 
         return res.status(200).json({
@@ -122,7 +122,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         width: image.width,
         height: image.height,
         format: image.format || 'jpg',
-        tags: image.tags || []
+        tags: Array.isArray(image.tags) ? image.tags : []
       }));
 
       const hasMore = session.usedIndices.size < session.totalImages;
@@ -160,8 +160,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       width: image.width,
       height: image.height,
       format: image.format || 'jpg',
-      tags: image.tags || []
+      tags: Array.isArray(image.tags) ? image.tags : []
     }));
+
+    console.log('API response images with tags:', imagesWithBlur.map(img => ({ id: img.id, tags: img.tags })));
 
     return res.status(200).json({
       images: imagesWithBlur,

@@ -5,6 +5,8 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { useSession } from 'next-auth/react';
 import cloudinary from "../utils/cloudinary";
 import Modal from "../components/Modal";
+import TagModal from "../components/TagModal";
+import RemoveTagModal from "../components/RemoveTagModal";
 import Navbar from "../components/Navbar";
 import type { ImageProps } from "../utils/types";
 import { getBase64ImageUrl } from "../utils/getBase64Url";
@@ -24,6 +26,15 @@ export default function Home({ initialImages = [] }: { initialImages: ImageProps
   const [isTagDropdownOpen, setIsTagDropdownOpen] = useState(false);
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [availableTags, setAvailableTags] = useState<string[]>([]);
+  const [addingTag, setAddingTag] = useState<string | null>(null);
+  const [isTagModalOpen, setIsTagModalOpen] = useState(false);
+  const [selectedImageForTag, setSelectedImageForTag] = useState<string | null>(null);
+  const [isRemoveTagModalOpen, setIsRemoveTagModalOpen] = useState(false);
+  const [selectedImageForTagRemoval, setSelectedImageForTagRemoval] = useState<string | null>(null);
+  const [selectedImageTags, setSelectedImageTags] = useState<string[]>([]);
+  
+  const sortDropdownRef = useRef<HTMLDivElement>(null);
+  const tagDropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (router.query.message === 'logged_out') {
@@ -35,6 +46,22 @@ export default function Home({ initialImages = [] }: { initialImages: ImageProps
       return () => clearTimeout(timer);
     }
   }, [router.query.message, router]);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (sortDropdownRef.current && !sortDropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+      if (tagDropdownRef.current && !tagDropdownRef.current.contains(event.target as Node)) {
+        setIsTagDropdownOpen(false);
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   // Fetch available tags on mount
   useEffect(() => {
@@ -53,20 +80,16 @@ export default function Home({ initialImages = [] }: { initialImages: ImageProps
   }, []);
 
   const handleSortChange = async (newOrder: 'desc' | 'asc' | 'random') => {
-    console.log('Sort order changed to:', newOrder);
     setSortOrder(newOrder);
     setIsDropdownOpen(false);
     setLoading(true);
     setCursor("");
     setHasMore(true);
-    // Clear existing images immediately
     setImages([]);
     
     try {
-      console.log('Fetching with sort:', newOrder);
       const res = await fetch(`/api/images?sort=${newOrder}${selectedTag ? `&tag=${selectedTag}` : ''}`);
       const data = await res.json();
-      console.log('Received data:', data);
       
       if (data.images?.length) {
         setImages(data.images);
@@ -159,6 +182,104 @@ export default function Home({ initialImages = [] }: { initialImages: ImageProps
     }
   };
 
+  const addTag = async (public_id: string, tag: string) => {
+    setAddingTag(public_id);
+    try {
+      const cleanPublicId = public_id.replace('charliezard/', '');
+
+      const response = await fetch('/api/add-tag', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ public_id: cleanPublicId, tag }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.details || data.error || 'Failed to add tag');
+      }
+
+      setImages(prev => prev.map(img => {
+        if (img.public_id === public_id) {
+          return {
+            ...img,
+            tags: data.tags || [...(img.tags || []), tag]
+          };
+        }
+        return img;
+      }));
+
+      if (!availableTags.includes(tag)) {
+        setAvailableTags(prev => [...prev, tag].sort());
+      }
+
+      setMessage(`Added tag #${tag}`);
+    } catch (error) {
+      console.error('Error adding tag:', error);
+      setMessage(`Failed to add tag: ${(error as Error).message}`);
+    } finally {
+      setAddingTag(null);
+      setTimeout(() => setMessage(''), 3000);
+    }
+  };
+
+  const removeTag = async (public_id: string, tag: string) => {
+    try {
+      const cleanPublicId = public_id.replace('charliezard/', '');
+
+      const response = await fetch('/api/remove-tag', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ public_id: cleanPublicId, tag }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.details || data.error || 'Failed to remove tag');
+      }
+
+      setImages(prev => prev.map(img => {
+        if (img.public_id === public_id) {
+          return {
+            ...img,
+            tags: data.tags || img.tags?.filter(t => t !== tag) || []
+          };
+        }
+        return img;
+      }));
+
+      const tagStillInUse = images.some(img => 
+        img.public_id !== public_id && img.tags?.includes(tag)
+      );
+      if (!tagStillInUse) {
+        setAvailableTags(prev => prev.filter(t => t !== tag));
+      }
+
+      setMessage(`Removed tag #${tag}`);
+    } catch (error) {
+      console.error('Error removing tag:', error);
+      setMessage(`Failed to remove tag: ${(error as Error).message}`);
+    } finally {
+      setTimeout(() => setMessage(''), 3000);
+    }
+  };
+
+  const openTagModal = (public_id: string) => {
+    setSelectedImageForTag(public_id);
+    setIsTagModalOpen(true);
+  };
+
+  const openRemoveTagModal = (public_id: string, tags: string[]) => {
+    setSelectedImageForTagRemoval(public_id);
+    setSelectedImageTags(tags);
+    setIsRemoveTagModalOpen(true);
+  };
+
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900">
       <Head>
@@ -185,7 +306,7 @@ export default function Home({ initialImages = [] }: { initialImages: ImageProps
       <main className="mx-auto max-w-7xl px-4 pt-24 pb-8">
         <div className="flex justify-end mb-6 gap-2 relative">
           {/* Tag filter dropdown */}
-          <div className="relative">
+          <div className="relative" ref={tagDropdownRef}>
             <button
               onClick={() => setIsTagDropdownOpen(!isTagDropdownOpen)}
               className="bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white px-4 py-2 rounded-lg font-mono text-sm flex items-center gap-2 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
@@ -203,7 +324,7 @@ export default function Home({ initialImages = [] }: { initialImages: ImageProps
                   onClick={() => handleTagChange(null)}
                   className="w-full px-4 py-2 text-left font-mono text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
                 >
-                  <span className="text-green-500">#</span> Show all
+                  <span className="text-green-500">#</span> show all
                 </button>
                 {availableTags.map(tag => (
                   <button
@@ -219,7 +340,7 @@ export default function Home({ initialImages = [] }: { initialImages: ImageProps
           </div>
 
           {/* Sort dropdown */}
-          <div className="relative">
+          <div className="relative" ref={sortDropdownRef}>
             <button
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
               className="bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white px-4 py-2 rounded-lg font-mono text-sm flex items-center gap-2 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
@@ -273,9 +394,55 @@ export default function Home({ initialImages = [] }: { initialImages: ImageProps
                 blurDataURL={image.blurDataUrl}
                 loading={index < 8 ? "eager" : "lazy"}
                 onClick={() => router.push(`/?photoId=${image.public_id}`, undefined, { shallow: true })}
+                title={Array.isArray(image.tags) && image.tags.length > 0 ? `Tags: ${image.tags.map(t => '#' + t).join(' ')}` : 'No tags'}
               />
+              {/* Tags display - always show container */}
+              <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/60 to-transparent hidden sm:block">
+                <div className="flex flex-wrap gap-1">
+                  {Array.isArray(image.tags) && image.tags.length > 0 && (
+                    image.tags.map(tag => (
+                      <span 
+                        key={tag}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleTagChange(tag);
+                        }}
+                        className="text-xs bg-black/40 hover:bg-black/60 text-white px-2 py-1 rounded-full cursor-pointer transition-colors font-mono group/tag relative"
+                      >
+                        #{tag}
+                        {session && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openRemoveTagModal(image.public_id, [tag]);
+                            }}
+                            className="absolute -right-1 -top-1 w-4 h-4 bg-red-500 rounded-full items-center justify-center text-white opacity-0 group-hover/tag:opacity-100 transition-opacity flex"
+                            title="Remove tag"
+                          >
+                            ×
+                          </button>
+                        )}
+                      </span>
+                    ))
+                  )}
+                </div>
+              </div>
               {session && (
-                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
+                  {/* Add tag button */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      openTagModal(image.public_id);
+                    }}
+                    className="bg-blue-500 hover:bg-blue-600 text-white rounded-full p-2 shadow-lg"
+                    aria-label="Add tag"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A2 2 0 013 12V7a4 4 0 014-4z" />
+                    </svg>
+                  </button>
+                  {/* Delete button */}
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
@@ -310,6 +477,34 @@ export default function Home({ initialImages = [] }: { initialImages: ImageProps
         )}
 
         {photoId && <Modal images={images} />}
+        
+        <TagModal
+          isOpen={isTagModalOpen}
+          onClose={() => {
+            setIsTagModalOpen(false);
+            setSelectedImageForTag(null);
+          }}
+          onSubmit={(tag) => {
+            if (selectedImageForTag) {
+              addTag(selectedImageForTag, tag);
+            }
+          }}
+        />
+
+        <RemoveTagModal
+          isOpen={isRemoveTagModalOpen}
+          onClose={() => {
+            setIsRemoveTagModalOpen(false);
+            setSelectedImageForTagRemoval(null);
+            setSelectedImageTags([]);
+          }}
+          onRemove={(tag) => {
+            if (selectedImageForTagRemoval) {
+              removeTag(selectedImageForTagRemoval, tag);
+            }
+          }}
+          tags={selectedImageTags}
+        />
       </main>
     </div>
   );
@@ -323,7 +518,8 @@ export async function getStaticProps() {
       max_results: 12,
       resource_type: 'image',
       sort_by: 'created_at',
-      direction: 'desc'
+      direction: 'desc',
+      tags: true
     });
 
     const blurImagePromises = results.resources.map((image: any) => 
@@ -331,15 +527,19 @@ export async function getStaticProps() {
     );
     const blurDataUrls = await Promise.all(blurImagePromises);
 
-    const imagesWithBlur = results.resources.map((image: any, i: number) => ({
-      id: image.asset_id || image.public_id,
-      public_id: image.public_id,
-      blurDataUrl: blurDataUrls[i],
-      width: image.width,
-      height: image.height,
-      format: image.format || 'jpg',
-      tags: image.tags || []
-    }));
+    const imagesWithBlur = results.resources.map((image: any, i: number) => {
+      const tags = Array.isArray(image.tags) ? image.tags : [];
+      
+      return {
+        id: image.asset_id || image.public_id,
+        public_id: image.public_id,
+        blurDataUrl: blurDataUrls[i],
+        width: image.width,
+        height: image.height,
+        format: image.format || 'jpg',
+        tags: tags
+      };
+    });
 
     return {
       props: {
