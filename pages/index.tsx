@@ -19,6 +19,8 @@ export default function Home({ initialImages = [] }: { initialImages: ImageProps
   const { data: session } = useSession();
   const [deleting, setDeleting] = useState<string | null>(null);
   const [message, setMessage] = useState('');
+  const [sortOrder, setSortOrder] = useState<'desc' | 'asc' | 'random'>('desc');
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   useEffect(() => {
     if (router.query.message === 'logged_out') {
@@ -31,26 +33,47 @@ export default function Home({ initialImages = [] }: { initialImages: ImageProps
     }
   }, [router.query.message, router]);
 
+  const handleSortChange = async (newOrder: 'desc' | 'asc' | 'random') => {
+    console.log('Sort order changed to:', newOrder);
+    setSortOrder(newOrder);
+    setIsDropdownOpen(false);
+    setLoading(true);
+    setCursor("");
+    setHasMore(true);
+    // Clear existing images immediately
+    setImages([]);
+    
+    try {
+      console.log('Fetching with sort:', newOrder);
+      const res = await fetch(`/api/images?sort=${newOrder}`);
+      const data = await res.json();
+      console.log('Received data:', data);
+      
+      if (data.images?.length) {
+        setImages(data.images);
+        setCursor(data.next_cursor);
+        setHasMore(!!data.next_cursor);
+      } else {
+        setHasMore(false);
+      }
+    } catch (error) {
+      console.error('Error loading images:', error);
+    }
+    setLoading(false);
+  };
+
   const loadMore = useCallback(async () => {
     if (loading || !hasMore) return;
     
     setLoading(true);
     try {
-      const res = await fetch(`/api/images?cursor=${cursor}`);
+      const res = await fetch(`/api/images?cursor=${cursor}&sort=${sortOrder}`);
       const data = await res.json();
       
       if (data.images?.length) {
-        const existingIds = new Set(images.map(img => img.public_id));
-        const newImages = data.images.filter(img => !existingIds.has(img.public_id));
-        
-        if (newImages.length > 0) {
-          setImages(prev => [...prev, ...newImages]);
-          setCursor(data.next_cursor || "");
-        }
-        
-        if (newImages.length === 0 || !data.next_cursor) {
-          setHasMore(false);
-        }
+        setImages(prev => [...prev, ...data.images]);
+        setCursor(data.next_cursor);
+        setHasMore(!!data.next_cursor);
       } else {
         setHasMore(false);
       }
@@ -58,7 +81,7 @@ export default function Home({ initialImages = [] }: { initialImages: ImageProps
       console.error('Error loading more images:', error);
     }
     setLoading(false);
-  }, [cursor, loading, hasMore, images]);
+  }, [cursor, loading, hasMore, sortOrder]);
 
   const observerRef = useRef<IntersectionObserver>();
   const lastImageRef = useCallback((node: Element | null) => {
@@ -116,6 +139,42 @@ export default function Home({ initialImages = [] }: { initialImages: ImageProps
       )}
 
       <main className="mx-auto max-w-7xl px-4 pt-24 pb-8">
+        <div className="flex justify-end mb-6 relative">
+          <button
+            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+            className="bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white px-4 py-2 rounded-lg font-mono text-sm flex items-center gap-2 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+          >
+            <span className="text-green-500">$</span>
+            {sortOrder === 'desc' ? 'Newest First' : sortOrder === 'asc' ? 'Oldest First' : 'Random'}
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+          
+          {isDropdownOpen && (
+            <div className="absolute top-full right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden z-10">
+              <button
+                onClick={() => handleSortChange('desc')}
+                className="w-full px-4 py-2 text-left font-mono text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+              >
+                <span className="text-green-500">$</span> Newest First
+              </button>
+              <button
+                onClick={() => handleSortChange('asc')}
+                className="w-full px-4 py-2 text-left font-mono text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+              >
+                <span className="text-green-500">$</span> Oldest First
+              </button>
+              <button
+                onClick={() => handleSortChange('random')}
+                className="w-full px-4 py-2 text-left font-mono text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+              >
+                <span className="text-green-500">$</span> Random
+              </button>
+            </div>
+          )}
+        </div>
+
         <div className="grid grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4">
           {images.map((image, index) => (
             <div
@@ -177,17 +236,11 @@ export default function Home({ initialImages = [] }: { initialImages: ImageProps
 
 export async function getStaticProps() {
   try {
-    const results = await cloudinary.api.resources({
-      type: 'upload',
-      prefix: 'charliezard/',
-      max_results: 12,
-      sort_by: 'created_at',
-      direction: 'desc',
-      transformation: [
-        { width: 800, crop: 'scale' },
-        { quality: 'auto', fetch_format: 'auto' }
-      ]
-    });
+    const results = await cloudinary.search
+      .expression('folder:charliezard/*')
+      .sort_by('created_at', 'desc')
+      .max_results(12)
+      .execute();
 
     const blurImagePromises = results.resources.map((image: ImageProps) => 
       getBase64ImageUrl(image, true)
