@@ -182,17 +182,23 @@ export async function getStaticProps() {
       prefix: 'charliezard/',
       max_results: 12,
       sort_by: 'created_at',
-      direction: 'desc'
+      direction: 'desc',
+      transformation: [
+        { width: 800, crop: 'scale' },
+        { quality: 'auto', fetch_format: 'auto' }
+      ]
     });
 
     const blurImagePromises = results.resources.map((image: ImageProps) => 
-      getBase64ImageUrl(image)
+      getBase64ImageUrl(image, true)
     );
     const blurDataUrls = await Promise.all(blurImagePromises);
 
     const imagesWithBlur = results.resources.map((image: ImageProps, i: number) => ({
-      ...image,
-      blurDataUrl: blurDataUrls[i]
+      public_id: image.public_id,
+      blurDataUrl: blurDataUrls[i],
+      width: image.width,
+      height: image.height
     }));
 
     return {
