@@ -1,4 +1,4 @@
-## CHXRLIEGRXM
+## charliegram
 
 A website for my daughter Charlie. 
 
