@@ -11,6 +11,7 @@ export default function UploadPage() {
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState('')
   const [uploadProgress, setUploadProgress] = useState<{[key: string]: number}>({})
+  const [hashtags, setHashtags] = useState('')
 
   const handleDrag = useCallback((e: React.DragEvent) => {
     e.preventDefault()
@@ -52,6 +53,11 @@ export default function UploadPage() {
         const file = files[i]
         const formData = new FormData()
         formData.append('file', file)
+        
+        // Add hashtags if present
+        if (hashtags.trim()) {
+          formData.append('tags', hashtags.trim())
+        }
 
         const response = await fetch('/api/upload', {
           method: 'POST',
@@ -67,6 +73,7 @@ export default function UploadPage() {
       }
 
       setFiles([])
+      setHashtags('')
       router.push('/')
     } catch (err) {
       setError('Failed to upload images. Please try again.')
@@ -126,6 +133,21 @@ export default function UploadPage() {
               <div className="font-mono text-sm text-gray-600 dark:text-gray-400">
                 <span className="text-green-500">$</span> files_ready_to_upload: {files.length}
               </div>
+              
+              {/* Add hashtag input */}
+              <div className="space-y-2">
+                <label className="block font-mono text-sm text-gray-600 dark:text-gray-400">
+                  <span className="text-green-500">$</span> add_hashtags
+                </label>
+                <input
+                  type="text"
+                  value={hashtags}
+                  onChange={(e) => setHashtags(e.target.value)}
+                  placeholder="e.g. smile, playing, milestone (comma separated)"
+                  className="w-full px-4 py-2 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg font-mono text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                />
+              </div>
+
               <div className="grid grid-cols-3 gap-2 w-full">
                 {files.map((file, index) => (
                   <div key={index} className="relative group w-full">
