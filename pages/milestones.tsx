@@ -80,7 +80,7 @@ export default function Milestones({ images }: { images: MilestoneImage[] }) {
             images={[...Array(12)].map((_, index) => {
               const monthNumber = index + 1;
               return images.find(img => img.monthNumber === monthNumber);
-            }).filter((img): img is ImageProps => !!img)} 
+            }).filter((img): img is MilestoneImage => !!img)} 
           />
         )}
       </main>
