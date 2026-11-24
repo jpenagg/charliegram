@@ -157,20 +157,8 @@
   transform: translate(10%, 4%) rotate(9deg);
 }
 
-@keyframes blink {
-  50% {
-    opacity: 0;
-  }
-}
-.cursor {
-  animation: blink 1.1s steps(1) infinite;
-}
-
 @media (prefers-reduced-motion: reduce) {
   .stack .layer {
     transition: none;
-  }
-  .cursor {
-    animation: none;
   }
 }

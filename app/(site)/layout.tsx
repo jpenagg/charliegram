@@ -28,7 +28,7 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
 
       <footer className="mx-auto w-full max-w-6xl px-4 py-8 text-ink-soft sm:px-8">
         <p>
-          Made with love by Papa<span className="cursor" aria-hidden="true">_</span>
+          Made with love by Dada
         </p>
       </footer>
     </div>
